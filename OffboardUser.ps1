@@ -22,6 +22,9 @@ Import-Module AzureAD
 Import-Module ExchangeOnlineManagement
 Import-Module Microsoft.Graph.Users
 
+# Connect to Microsoft Graph with required permissions
+Connect-MgGraph -Scopes "User.Read.All", "Group.ReadWrite.All"
+
 # Connect to Entra ID 
 Connect-AzureAD
 
@@ -46,7 +49,7 @@ try {
     Write-Host "Error disabling user account via Microsoft Graph: $_"
 }
 
-Also disable via AzureAD module for compatibility
+# Disable via AzureAD module for compatibility
 try {
     Set-AzureADUser -ObjectId $UserToLock -AccountEnabled $false
     Write-Host "User account $UserToLock disabled successfully via AzureAD."
@@ -140,4 +143,3 @@ try {
 catch {
     Write-Error "Error converting user account to guest: $_"
 }
-
