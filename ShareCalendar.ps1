@@ -1,30 +1,41 @@
-param (
-    [Parameter(Mandatory = $true)]
-    [string]$TargetUser,
+function Check-InstallModule {
+    param (
+        [string]$ModuleName
+    )
 
-    [Parameter(Mandatory = $true)]
-    [string]$GranteeUser,
-
-    [Parameter(Mandatory = $false)]
-    [ValidateSet("None", "AvailabilityOnly", "LimitedDetails", "Reviewer", "Contributor", "NonEditingAuthor", "Author", "PublishingAuthor", "Editor", "PublishingEditor", "Owner", "Custom")]
-    $PermissionLevel = Read-Host "Enter the permission level (e.g., Reviewer, Editor, Owner). Press Enter for default (Editor)"
-    if ([string]::IsNullOrWhiteSpace($PermissionLevel)) {
-        $PermissionLevel = "Editor"
+    if (-not (Get-Module -ListAvailable -Name $ModuleName)) {
+        Write-Host "Module $ModuleName not found. Installing..."
+        Install-Module -Name $ModuleName -Force -AllowClobber
+    } else {
+        Write-Host "Module $ModuleName is already installed. Skipping installation."
+    }
 }
 
-)
+# Check and install required modules if necessary
+Check-InstallModule -ModuleName "AzureAD"
+Check-InstallModule -ModuleName "ExchangeOnlineManagement"
 
-# Install the Exchange Online module if not already installed
-if (-not (Get-Module -ListAvailable -Name ExchangeOnlineManagement)) {
-    Install-Module -Name ExchangeOnlineManagement -Force -Scope CurrentUser
-}
-
-# Import the module
+# Import necessary modules
+Import-Module AzureAD
 Import-Module ExchangeOnlineManagement
+
+# Check and install required modules if necessary
+Check-InstallModule -ModuleName "ExchangeOnlineManagement"
 
 # Prompt for admin UPN and connect to exchange online
 $AdminUPN = Read-Host "Enter your admin email address (UPN)"
-$Session = Connect-ExchangeOnline -UserPrincipalName $AdminUPN
+Connect-ExchangeOnline -UserPrincipalName $AdminUPN
+
+# Prompt for inputs
+$TargetUser = Read-Host "Enter the user's UPN who's mailbox will be shared (TargetUser)"
+$GranteeUser = Read-Host "Enter the user UPN who will be granted access (GranteeUser)"
+
+# If field is empty default permission will be editor
+$PermissionLevel = Read-Host "Enter the permission level (Default = Editor). Options: None, AvailabilityOnly, LimitedDetails, Reviewer, Contributor, NonEditingAuthor, Author, PublishingAuthor, Editor, PublishingEditor, Owner, Custom"
+
+if ([string]::IsNullOrWhiteSpace($PermissionLevel)) {
+    $PermissionLevel = "Editor"
+}
 
 # Check if permission exists
 try {
@@ -38,7 +49,7 @@ try {
     Write-Host "New permission entry added successfully!"
 }
 
+
 # Disconnect from Exchange Online
 Disconnect-ExchangeOnline -Confirm:$false
-
 Write-Host "Calendar access granted successfully!"
