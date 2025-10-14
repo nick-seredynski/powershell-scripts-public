@@ -2,6 +2,9 @@
 Import-Module AzureAD
 Connect-AzureAD
 
+# Enter your admin UPN for authentication
+$AdminUPN = Read-Host "Enter your admin email address (UPN)"
+
 # Variables
 $sourceUserUPN = Read-Host "UPN/Email of the user where permissions are copied"  # User who's permissions are being copied from
 $targetUserUPN = Read-Host "UPN/Email of the user where permissions are applied"  # User who's permissions are copied to
@@ -47,7 +50,7 @@ foreach ($group in $groups) {
 # Step 3: Copy Shared Mailbox Permissions
 Write-Host "Copying shared mailbox permissions..."
 Import-Module ExchangeOnlineManagement
-Connect-ExchangeOnline -UserPrincipalName "nick.seredynski@mobysoft.com"
+Connect-ExchangeOnline -UserPrincipalName $AdminUPN
 
 # Find shared mailboxes where the source user has permissions
 $sharedMailboxes = Get-Mailbox -RecipientTypeDetails SharedMailbox | Where-Object {
