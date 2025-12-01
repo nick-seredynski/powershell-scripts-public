@@ -1,0 +1,43 @@
+# Prerequisits: requires CSV file with user's display names
+
+# Connect to Exchange Online
+Connect-ExchangeOnline
+
+# Path to your CSV file
+# Layout needs to be a single column with the users' display names:
+    |    DisplayName    |
+
+# Example path and CSV name
+$csvPath = "C:\User\Scripts\GroupMembers.CSV"
+
+
+# Import the list of emails
+$members = Import-Csv $csvPath
+
+# Specify the group name or alias
+$groupName = Read-Host "Enter name of group"
+
+foreach ($m in $members) {
+    try {
+        # Check if user exists
+        $recipient = Get-Recipient -Identity $m.DisplayName -ErrorAction SilentlyContinue
+        if (-not $recipient) {
+            Write-Warning "User $($m.DisplayName) not found in directory. Skipping."
+            continue
+        }
+
+        # Add user to group
+        Add-DistributionGroupMember -Identity $groupName -Member $m.DisplayName -ErrorAction Stop
+        Write-Host "Added $($m.DisplayName) to $groupName" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "Failed to add $($m.DisplayName) to $groupName. Error: $_" -ForegroundColor Red
+    }
+}
+
+# Disconnect session
+Disconnect-ExchangeOnline -Confirm:$false
+
+# Prompt user to press any key to exit
+Read-Host "Press Enter to exit"
+
