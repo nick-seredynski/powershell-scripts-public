@@ -1,3 +1,5 @@
+# Prerequisits: requires a CSV file, in this example it is called Contacts.CSV
+
 # Connect to Exchange Online
 Connect-ExchangeOnline
 
